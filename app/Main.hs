@@ -5,8 +5,9 @@ import System.IO
 
 main :: IO ()
 main = do 
-    day1Main
-    day2Main
+    -- day1Main
+    -- day2Main
+    day3Main
 
 -- Outputs
 
@@ -31,10 +32,24 @@ day2Main = do
     print posWithAim
     print $ (\(x, d, a) -> x * d) posWithAim
 
+day3Main :: IO ()
+day3Main = do 
+    contents <- readFile "data/day3.txt"  
+    let input = words contents
+    print "Day 3 - Part 1:"
+    print $ calculateGammaRate (map readBinary input)
+    print $ calculateEpsilonRate (map readBinary input)
+    print "Day 3 - Part 2:"
+    print $ oxygenGeneratorRating (map readBinary input) 
+    print $ co2ScrubberRating (map readBinary input)
+
 -- Helpers
 
 readInt :: String -> Int
 readInt = read
+
+readBinary :: String -> [Int]
+readBinary = map (read . pure :: Char -> Int)
 
 readCommand :: String -> Command
 readCommand ('f':'o':'r':'w':'a':'r':'d':' ': n) = Forward (readInt n)

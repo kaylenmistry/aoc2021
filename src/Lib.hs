@@ -1,4 +1,8 @@
-module Lib ( countDepthIncreases, generateSlidingWindow, calculatePosition, calculatePositionResult, calculatePositionWithAim, Command(Forward, Up, Down)) where
+module Lib ( 
+    countDepthIncreases, generateSlidingWindow, 
+    calculatePosition, calculatePositionWithAim, Command(Forward, Up, Down),
+    calculateGammaRate, calculateEpsilonRate, oxygenGeneratorRating, co2ScrubberRating
+    ) where
 
 -- Day 1: AOC 2021
 
@@ -37,3 +41,31 @@ calculateNewPositionWithAim :: (Int, Int, Int) -> Command -> (Int, Int, Int)
 calculateNewPositionWithAim (x, d, aim) (Forward n) = (x + n, d + (aim * n), aim)
 calculateNewPositionWithAim (x, d, aim) (Up n) = (x, d, aim - n)
 calculateNewPositionWithAim (x, d, aim) (Down n) = (x, d, aim + n)
+
+-- Day 3: AOC 2021
+
+calculateGammaRate :: [[Int]] -> [Int]
+calculateGammaRate xs = map (\b -> if b < 0 then 0 else 1) (countBitOccurrences xs)
+
+calculateEpsilonRate :: [[Int]] -> [Int]
+calculateEpsilonRate xs = map (\b -> if b < 0 then 1 else 0) (countBitOccurrences xs)
+
+countBitOccurrences :: [[Int]] -> [Int]
+countBitOccurrences xs = foldl (zipWith (\c b -> if b == 1 then c + 1 else c - 1)) (repeat 0) xs
+
+
+oxygenGeneratorRating :: [[Int]] -> [Int]
+oxygenGeneratorRating [x] = x
+oxygenGeneratorRating ([]:xs) = []
+oxygenGeneratorRating xs = bit : (oxygenGeneratorRating $ map tail $ filter (\bs -> bit == head bs) xs)
+    where 
+        bit = if bitCount < 0 then 0 else 1
+        bitCount = foldl (\c b -> if b == 1 then c + 1 else c - 1) 0 (map head xs)
+
+co2ScrubberRating :: [[Int]] -> [Int]
+co2ScrubberRating [x] = x
+co2ScrubberRating ([]:xs) = []
+co2ScrubberRating xs = bit : (co2ScrubberRating $ map tail $ filter (\bs -> bit == head bs) xs)
+    where 
+        bit = if bitCount < 0 then 1 else 0
+        bitCount = foldl (\c b -> if b == 1 then c + 1 else c - 1) 0 (map head xs)
