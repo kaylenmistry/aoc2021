@@ -1,8 +1,11 @@
 module Lib ( 
     countDepthIncreases, generateSlidingWindow, 
     calculatePosition, calculatePositionWithAim, Command(Forward, Up, Down),
-    calculateGammaRate, calculateEpsilonRate, oxygenGeneratorRating, co2ScrubberRating
-    ) where
+    calculateGammaRate, calculateEpsilonRate, oxygenGeneratorRating, co2ScrubberRating,
+    playBingo, createBingoBoards, bingoScore
+) where
+
+import Data.List(transpose)
 
 -- Day 1: AOC 2021
 
@@ -69,3 +72,30 @@ co2ScrubberRating xs = bit : (co2ScrubberRating $ map tail $ filter (\bs -> bit 
     where 
         bit = if bitCount < 0 then 1 else 0
         bitCount = foldl (\c b -> if b == 1 then c + 1 else c - 1) 0 (map head xs)
+
+-- Day 4: AOC 2021
+
+bingoScore :: Int -> [[Maybe Int]] -> Maybe Int 
+bingoScore n board = fmap sum $ sequence $ filter (\x -> x /= Nothing) (concat board)
+
+playBingo :: [Int] -> [[[Maybe Int]]] -> (Int, [[Maybe Int]])
+playBingo (n:ns) boards = if length bingoBoards > 0 then (n, head bingoBoards) else playBingo ns updatedBoards
+    where
+        bingoBoards = filter (checkForBingo) updatedBoards
+        updatedBoards = map (maybeMarkBoard n) boards
+
+checkForBingo :: [[Maybe Int]] -> Bool
+checkForBingo board = checkForBingoRows board || checkForBingoRows (transpose board)
+
+checkForBingoRows :: [[Maybe Int]] -> Bool
+checkForBingoRows board = foldl (||) False $ map (foldl (\a x -> a && x == Nothing) True) board
+
+createBingoBoards :: [[[Int]]] -> [[[Maybe Int]]]
+createBingoBoards = map . map . map $ (\x -> Just x)
+
+maybeMarkBoard :: Int -> [[Maybe Int]] -> [[Maybe Int]]
+maybeMarkBoard x board = (map . map) (markBoard x) board 
+
+markBoard :: Int -> Maybe Int -> Maybe Int
+markBoard _ Nothing = Nothing
+markBoard x (Just y) = if x == y then Nothing else Just y
