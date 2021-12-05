@@ -2,10 +2,13 @@ module Lib (
     countDepthIncreases, generateSlidingWindow, 
     calculatePosition, calculatePositionWithAim, Command(Forward, Up, Down),
     calculateGammaRate, calculateEpsilonRate, oxygenGeneratorRating, co2ScrubberRating,
-    playBingo, createBingoBoards, bingoScore
+    playBingo, createBingoBoards, bingoScore, findBingoWinner, findLastBingoWinner,
+    generateCoordinateSpace, getCollisions
 ) where
 
-import Data.List(transpose)
+import Data.List(transpose, partition)
+import Data.Map (Map)
+import qualified Data.Map as Map
 
 -- Day 1: AOC 2021
 
@@ -75,14 +78,22 @@ co2ScrubberRating xs = bit : (co2ScrubberRating $ map tail $ filter (\bs -> bit 
 
 -- Day 4: AOC 2021
 
-bingoScore :: Int -> [[Maybe Int]] -> Maybe Int 
-bingoScore n board = fmap sum $ sequence $ filter (\x -> x /= Nothing) (concat board)
+bingoScore :: (Int, [[Maybe Int]]) -> Maybe Int 
+bingoScore (n, board) = fmap sum $ sequence $ filter (\x -> x /= Nothing) (concat board)
 
-playBingo :: [Int] -> [[[Maybe Int]]] -> (Int, [[Maybe Int]])
-playBingo (n:ns) boards = if length bingoBoards > 0 then (n, head bingoBoards) else playBingo ns updatedBoards
+findBingoWinner :: [(Int, [[[Maybe Int]]])] -> (Int, [[Maybe Int]]) 
+findBingoWinner ((n, []): xs) = findBingoWinner xs
+findBingoWinner ((n, bs): xs) = (n, head bs)
+
+findLastBingoWinner :: [(Int, [[[Maybe Int]]])] -> (Int, [[Maybe Int]])
+findLastBingoWinner = findBingoWinner . reverse
+
+playBingo :: [Int] -> [[[Maybe Int]]] -> [(Int, [[[Maybe Int]]])]
+playBingo [] _ = []
+playBingo _ [] = []
+playBingo (n:ns) boards = (n, bingoBoards) : (playBingo ns updatedBoards)
     where
-        bingoBoards = filter (checkForBingo) updatedBoards
-        updatedBoards = map (maybeMarkBoard n) boards
+        (bingoBoards, updatedBoards) = partition (checkForBingo) $ map (maybeMarkBoard n) boards
 
 checkForBingo :: [[Maybe Int]] -> Bool
 checkForBingo board = checkForBingoRows board || checkForBingoRows (transpose board)
@@ -99,3 +110,31 @@ maybeMarkBoard x board = (map . map) (markBoard x) board
 markBoard :: Int -> Maybe Int -> Maybe Int
 markBoard _ Nothing = Nothing
 markBoard x (Just y) = if x == y then Nothing else Just y
+
+-- Day 5: AOC 2021
+
+getCollisions :: Map (Int, Int) Int -> [(Int, Int)]
+getCollisions = Map.keys . Map.filter (> 1)
+
+generateCoordinateSpace :: [((Int, Int), (Int, Int))] -> Map (Int, Int) Int
+generateCoordinateSpace lines = generateCoordinateSpace' lines Map.empty
+
+generateCoordinateSpace' :: [((Int, Int), (Int, Int))] -> Map (Int, Int) Int -> Map (Int, Int) Int
+generateCoordinateSpace' [] m = m
+generateCoordinateSpace' ((to, from):xs) m = generateCoordinateSpace' xs updatedMap
+    where 
+        updatedMap = updateMap coordinates m
+        coordinates = lineCoordinates to from
+
+updateMap :: [(Int, Int)] -> Map (Int, Int) Int -> Map (Int, Int) Int
+updateMap [] m = m
+updateMap (x:xs) m = updateMap xs (Map.insertWith (+) x 1 m)
+
+lineCoordinates :: (Int, Int) -> (Int, Int) -> [(Int, Int)]
+lineCoordinates (x1, y1) (x2, y2) 
+    | x1 == x2 && y1 == y2 = [(x1, y1)]
+    | x1 == x2  = [(x1, y) | y <- [min y1 y2 .. max y1 y2]]
+    | y1 == y2  = [(x, y1) | x <- [min x1 x2 .. max x1 x2]]
+    | otherwise = (x1, y1) : lineCoordinates (x, y) (x2, y2)
+        where x = if x1 < x2 then x1 + 1 else x1 - 1
+              y = if y1 < y2 then y1 + 1 else y1 - 1

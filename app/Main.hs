@@ -9,7 +9,8 @@ main = do
     -- day1Main
     -- day2Main
     -- day3Main
-    day4Main
+    -- day4Main
+    day5Main
 
 -- Outputs
 
@@ -47,14 +48,25 @@ day3Main = do
 
 day4Main :: IO ()
 day4Main = do 
-    contents <- readFile "data/day4.txt"  
+    contents <- readFile "data/day4.txt"
     let (ns:_:bs) = lines contents
     let bingoNumbers = parseListOfNumbers ns
     let boards = (map . map .map) readInt $ (map . map) (chunksOf 3) $ splitWhen (\x -> x == "") bs
     print "Day 4 - Part 1:"
-    let (n, board) = playBingo bingoNumbers (createBingoBoards boards)
-    print n
-    print $ bingoScore n board
+    let results = playBingo bingoNumbers (createBingoBoards boards)
+    print $ bingoScore $ findBingoWinner results
+    print "Day 4 - Part 2:"
+    print $ bingoScore $ findLastBingoWinner results
+
+day5Main :: IO ()
+day5Main = do
+    contents <- readFile "data/day5.txt"
+    let input = parseCoordinates $ lines contents
+    print "Day 5 - Part 1:"
+    -- TODO: comment out the diagonal line coordinate generator
+    -- print $ length $ getCollisions $ generateCoordinateSpace input
+    print "Day 5 - Part 2:"
+    print $ length $ getCollisions $ generateCoordinateSpace input
 
 -- Helpers
 
@@ -73,3 +85,11 @@ readCommand ('d':'o':'w':'n':' ': n) = Down (readInt n)
 
 parseListOfNumbers :: String -> [Int]
 parseListOfNumbers ns = map readInt $ splitOn "," ns
+
+parseCoordinates :: [String] -> [((Int, Int), (Int, Int))]
+parseCoordinates [] = []
+parseCoordinates (l:ls) = ((x1,y1), (x2,y2)) : (parseCoordinates ls)
+    where 
+        [x1, y1] = map readInt $ splitOn "," to
+        [x2, y2] = map readInt $ splitOn "," from
+        [to, from] = splitOn "->" l
