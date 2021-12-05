@@ -2,12 +2,14 @@ module Main where
 
 import Lib
 import System.IO
+import Data.List.Split
 
 main :: IO ()
 main = do 
     -- day1Main
     -- day2Main
-    day3Main
+    -- day3Main
+    day4Main
 
 -- Outputs
 
@@ -43,6 +45,17 @@ day3Main = do
     print $ oxygenGeneratorRating (map readBinary input) 
     print $ co2ScrubberRating (map readBinary input)
 
+day4Main :: IO ()
+day4Main = do 
+    contents <- readFile "data/day4.txt"  
+    let (ns:_:bs) = lines contents
+    let bingoNumbers = parseListOfNumbers ns
+    let boards = (map . map .map) readInt $ (map . map) (chunksOf 3) $ splitWhen (\x -> x == "") bs
+    print "Day 4 - Part 1:"
+    let (n, board) = playBingo bingoNumbers (createBingoBoards boards)
+    print n
+    print $ bingoScore n board
+
 -- Helpers
 
 readInt :: String -> Int
@@ -55,3 +68,8 @@ readCommand :: String -> Command
 readCommand ('f':'o':'r':'w':'a':'r':'d':' ': n) = Forward (readInt n)
 readCommand ('u':'p':' ': n) = Up (readInt n)
 readCommand ('d':'o':'w':'n':' ': n) = Down (readInt n)
+
+-- Parsing 
+
+parseListOfNumbers :: String -> [Int]
+parseListOfNumbers ns = map readInt $ splitOn "," ns
