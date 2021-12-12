@@ -5,7 +5,7 @@ import System.IO ()
 import Data.List.Split ( chunksOf, splitOn, splitWhen )
 import Data.List(sort, group, dropWhileEnd)
 import Data.Char (isSpace)
-import Lib (countUniqueDigits, findCorruptCharacter)
+import Lib (autocompleteScore)
 
 main :: IO ()
 main = do 
@@ -116,8 +116,10 @@ day10Main = do
     contents <- readFile "data/day10.txt"
     let input = lines contents
     print "Day 10 - Part 1:"
-    print $ map findCorruptCharacter input
+    print $ totalSyntaxErrorScore (map findCorruptCharacter input)
     print "Day 10 - Part 2:"
+    let autocompleteScores = sort $ map (autocompleteScore . completeLine) (filterCorruptedLines input)
+    print $ autocompleteScores!!27
 
 -- Helpers
 

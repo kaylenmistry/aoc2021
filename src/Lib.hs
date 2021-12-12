@@ -8,11 +8,12 @@ module Lib (
     alignCrabs, alignExponentialCrabs,
     countUniqueDigits,
     sumLowPoints,
-    findCorruptCharacter
+    totalSyntaxErrorScore, findCorruptCharacter, filterCorruptedLines, completeLine, autocompleteScore
 ) where
 
-import Data.List(transpose, partition, sort, zip5)
+import Data.List (transpose, partition, sort, zip5)
 import Data.Map (Map)
+import Data.Maybe (isNothing)
 import qualified Data.Map as Map
 import Text.ParserCombinators.ReadP (count)
 
@@ -212,12 +213,55 @@ localMinima xs = map (\(a, b, c, d, e) -> a) $ filter (\(a, b, c, d, e) -> a < b
 
 -- Day 10: AOC 2021
 
+totalSyntaxErrorScore :: [Maybe Char] -> Int
+totalSyntaxErrorScore = foldr ((+) . syntaxErrorScore) 0
+
+syntaxErrorScore :: Maybe Char -> Int
+syntaxErrorScore (Just ')') = 3
+syntaxErrorScore (Just ']') = 57
+syntaxErrorScore (Just '}') = 1197
+syntaxErrorScore (Just '>') = 25137
+syntaxErrorScore c = 0
+
 findCorruptCharacter :: [Char] -> Maybe Char
 findCorruptCharacter cs = findCorruptCharacter' cs []
 
 findCorruptCharacter' :: [Char] -> [Char] -> Maybe Char
 findCorruptCharacter' [] stk = Nothing
 findCorruptCharacter' (c:cs) stk
-    | c `elem` ['(', '{', '['] = findCorruptCharacter' cs (c:stk)
-    | c == head stk            = findCorruptCharacter' cs (tail stk)
-    | otherwise                = Just c
+    | c `elem` "{([<" = findCorruptCharacter' cs (closingTag c:stk)
+    | null stk        = findCorruptCharacter' cs stk
+    | c == head stk   = findCorruptCharacter' cs (tail stk)
+    | otherwise       = Just c
+
+closingTag :: Char -> Char
+closingTag '(' = ')'
+closingTag '[' = ']'
+closingTag '{' = '}'
+closingTag '<' = '>'
+closingTag c = error "invalid opening tag"
+
+filterCorruptedLines :: [[Char]] -> [[Char]]
+filterCorruptedLines = filter (isNothing . findCorruptCharacter)
+
+completeLine :: [Char] -> [Char]
+completeLine cs = completeLine' cs []
+
+completeLine' :: [Char] -> [Char] -> [Char]
+completeLine' [] stk = stk
+completeLine' (c:cs) stk 
+    | c `elem` "{([<" = completeLine' cs (closingTag c:stk)
+    | null stk        = error "corrupt line"
+    | c == head stk   = completeLine' cs (tail stk)
+    | otherwise       = error "corrupt line"
+
+autocompleteScore :: [Char] -> Int
+autocompleteScore [] = 0
+autocompleteScore (c:cs) = completionScore c + (5 * autocompleteScore cs)
+
+completionScore :: Char -> Int
+completionScore ')' = 1
+completionScore ']' = 2
+completionScore '}' = 3
+completionScore '>' = 4
+completionScore c   = 0
