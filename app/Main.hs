@@ -1,11 +1,11 @@
 module Main where
 
 import Lib
-import System.IO
-import Data.List.Split
+import System.IO ()
+import Data.List.Split ( chunksOf, splitOn, splitWhen )
 import Data.List(sort, group, dropWhileEnd)
 import Data.Char (isSpace)
-import Lib (countUniqueDigits)
+import Lib (countUniqueDigits, findCorruptCharacter)
 
 main :: IO ()
 main = do 
@@ -16,7 +16,9 @@ main = do
     -- day5Main
     -- day6Main
     -- day7Main
-    day8Main
+    -- day8Main
+    -- day9Main
+    day10Main
 
 -- Outputs
 
@@ -35,7 +37,7 @@ day2Main = do
     print "Day 2 - Part 1:"
     let posOriginal = calculatePosition $ map readCommand fileLines
     print posOriginal
-    print $ (\(x, d) -> x * d) posOriginal
+    print $ uncurry (*) posOriginal
     print "Day 2 - Part 2:"
     let posWithAim = calculatePositionWithAim $ map readCommand fileLines
     print posWithAim
@@ -46,11 +48,11 @@ day3Main = do
     contents <- readFile "data/day3.txt"  
     let input = words contents
     print "Day 3 - Part 1:"
-    print $ calculateGammaRate (map readBinary input)
-    print $ calculateEpsilonRate (map readBinary input)
+    print $ calculateGammaRate (map readDigits input)
+    print $ calculateEpsilonRate (map readDigits input)
     print "Day 3 - Part 2:"
-    print $ oxygenGeneratorRating (map readBinary input) 
-    print $ co2ScrubberRating (map readBinary input)
+    print $ oxygenGeneratorRating (map readDigits input) 
+    print $ co2ScrubberRating (map readDigits input)
 
 day4Main :: IO ()
 day4Main = do 
@@ -78,7 +80,7 @@ day6Main :: IO ()
 day6Main = do
     contents <- readFile "data/day6.txt" 
     let input = parseListOfNumbers $ head $ lines contents
-    let startFish = [0] ++ (map length $ group $ sort input) ++ [0, 0, 0]
+    let startFish = [0] ++ map length (group $ sort input) ++ [0, 0, 0]
     print "Day 6 - Part 1:"
     print $ sum $ lanternfish 80 startFish
     print "Day 6 - Part 2:"
@@ -100,13 +102,30 @@ day8Main = do
     let input = map (map (splitOn " " . trim) . splitOn "|") (lines contents)
     print $ sum $ map countUniqueDigits input
 
+day9Main :: IO ()
+day9Main = do 
+    contents <- readFile "data/day9.txt" 
+    print "Day 9 - Part 1:"
+    let input = lines contents
+    let emptyCol = replicate (2 + length (head input)) 9
+    let sanitisedInput = emptyCol : map (\l -> 9 : readDigits l ++ [9]) input ++ [emptyCol]
+    print $ sumLowPoints sanitisedInput
+
+day10Main :: IO ()
+day10Main = do 
+    contents <- readFile "data/day10.txt"
+    let input = lines contents
+    print "Day 10 - Part 1:"
+    print $ map findCorruptCharacter input
+    print "Day 10 - Part 2:"
+
 -- Helpers
 
 readInt :: String -> Int
 readInt = read
 
-readBinary :: String -> [Int]
-readBinary = map (read . pure :: Char -> Int)
+readDigits :: String -> [Int]
+readDigits = map (read . pure :: Char -> Int)
 
 readCommand :: String -> Command
 readCommand ('f':'o':'r':'w':'a':'r':'d':' ': n) = Forward (readInt n)

@@ -6,11 +6,12 @@ module Lib (
     generateCoordinateSpace, getCollisions,
     lanternfish,
     alignCrabs, alignExponentialCrabs,
-    countUniqueDigits
-
+    countUniqueDigits,
+    sumLowPoints,
+    findCorruptCharacter
 ) where
 
-import Data.List(transpose, partition, sort)
+import Data.List(transpose, partition, sort, zip5)
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Text.ParserCombinators.ReadP (count)
@@ -24,7 +25,7 @@ countDepthIncreases' :: Ord a => [a] -> Int -> Int
 countDepthIncreases' [] n = n
 countDepthIncreases' [x] n = n
 countDepthIncreases' (x1:x2:xs) n = countDepthIncreases' (x2:xs) count
-    where count = if x2 > x1 then (n + 1) else n
+    where count = if x2 > x1 then n + 1 else n
 
 generateSlidingWindow :: Num a => [a] -> [a]
 generateSlidingWindow (x1:x2:x3:xs) = (x1 + x2 + x3) : (generateSlidingWindow (x2:x3:xs))
@@ -35,10 +36,10 @@ generateSlidingWindow xs = []
 data Command = Forward Int | Up Int | Down Int deriving (Show)
 
 calculatePositionResult :: (Int, Int) -> Int
-calculatePositionResult (x, y) = (x * y)
+calculatePositionResult (x, y) = x * y
 
 calculatePosition :: [Command] -> (Int, Int)
-calculatePosition cs = foldl calculateNewPosition (0, 0) cs
+calculatePosition = foldl calculateNewPosition (0, 0)
 
 calculateNewPosition :: (Int, Int) -> Command -> (Int, Int)
 calculateNewPosition (x, d) (Forward n) = (x + n, d)
@@ -46,7 +47,7 @@ calculateNewPosition (x, d) (Up n) = (x, d - n)
 calculateNewPosition (x, d) (Down n) = (x, d + n)
 
 calculatePositionWithAim :: [Command] -> (Int, Int, Int)
-calculatePositionWithAim cs = foldl calculateNewPositionWithAim (0, 0, 0) cs
+calculatePositionWithAim = foldl calculateNewPositionWithAim (0, 0, 0)
 
 calculateNewPositionWithAim :: (Int, Int, Int) -> Command -> (Int, Int, Int)
 calculateNewPositionWithAim (x, d, aim) (Forward n) = (x + n, d + (aim * n), aim)
@@ -190,9 +191,33 @@ expDistance c x = div (s * (s + 1)) 2
     where s = abs (x - c)
 
 -- Day 8: AOC 2021
+-- Day 8: AOC 2021
 
 countUniqueDigits :: [[String]] -> Int
 countUniqueDigits [input, output] = length uniqueDigits
     where 
         uniqueDigits = filter (\x -> length x `elem` [2, 3, 4, 7]) output
 countUniqueDigits xs = error "invalid format"
+
+-- Day 9: AOC 2021
+
+sumLowPoints :: [[Int]] -> Int
+sumLowPoints (r1:r2:r3:rs) = res + sumLowPoints (r2:r3:rs)
+    where
+        res = sum $ map (+ 1) $ localMinima (zip5 r2 r1 r3 (9:r2) (tail r2))
+sumLowPoints rs = 0
+
+localMinima :: [(Int, Int, Int, Int, Int)] -> [Int] 
+localMinima xs = map (\(a, b, c, d, e) -> a) $ filter (\(a, b, c, d, e) -> a < b && a < c && a < d && a < e) xs
+
+-- Day 10: AOC 2021
+
+findCorruptCharacter :: [Char] -> Maybe Char
+findCorruptCharacter cs = findCorruptCharacter' cs []
+
+findCorruptCharacter' :: [Char] -> [Char] -> Maybe Char
+findCorruptCharacter' [] stk = Nothing
+findCorruptCharacter' (c:cs) stk
+    | c `elem` ['(', '{', '['] = findCorruptCharacter' cs (c:stk)
+    | c == head stk            = findCorruptCharacter' cs (tail stk)
+    | otherwise                = Just c
