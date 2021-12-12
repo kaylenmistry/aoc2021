@@ -3,7 +3,9 @@ module Main where
 import Lib
 import System.IO
 import Data.List.Split
-import Data.List(sort, group)
+import Data.List(sort, group, dropWhileEnd)
+import Data.Char (isSpace)
+import Lib (countUniqueDigits)
 
 main :: IO ()
 main = do 
@@ -13,7 +15,8 @@ main = do
     -- day4Main
     -- day5Main
     -- day6Main
-    day7Main
+    -- day7Main
+    day8Main
 
 -- Outputs
 
@@ -54,7 +57,7 @@ day4Main = do
     contents <- readFile "data/day4.txt"
     let (ns:_:bs) = lines contents
     let bingoNumbers = parseListOfNumbers ns
-    let boards = (map . map .map) readInt $ (map . map) (chunksOf 3) $ splitWhen (\x -> x == "") bs
+    let boards = (map . map .map) readInt $ (map . map) (chunksOf 3) $ splitWhen (== "") bs
     print "Day 4 - Part 1:"
     let results = playBingo bingoNumbers (createBingoBoards boards)
     print $ bingoScore $ findBingoWinner results
@@ -90,6 +93,12 @@ day7Main = do
     print "Day 7 - Part 2:"
     print $ alignExponentialCrabs input
 
+day8Main :: IO ()
+day8Main = do 
+    contents <- readFile "data/day8.txt"
+    print "Day 8 - Part 1:"
+    let input = map (map (splitOn " " . trim) . splitOn "|") (lines contents)
+    print $ sum $ map countUniqueDigits input
 
 -- Helpers
 
@@ -103,16 +112,23 @@ readCommand :: String -> Command
 readCommand ('f':'o':'r':'w':'a':'r':'d':' ': n) = Forward (readInt n)
 readCommand ('u':'p':' ': n) = Up (readInt n)
 readCommand ('d':'o':'w':'n':' ': n) = Down (readInt n)
+readCommand s = error "invalid command"
 
 -- Parsing 
 
 parseListOfNumbers :: String -> [Int]
-parseListOfNumbers ns = map readInt $ splitOn "," ns
+parseListOfNumbers ns = map readInt $ splitOn "," (trim ns)
+
+parseSpacedNumbers :: String -> [Int]
+parseSpacedNumbers ns = map readInt $ splitOn " " (trim ns)
 
 parseCoordinates :: [String] -> [((Int, Int), (Int, Int))]
 parseCoordinates [] = []
-parseCoordinates (l:ls) = ((x1,y1), (x2,y2)) : (parseCoordinates ls)
+parseCoordinates (l:ls) = ((x1,y1), (x2,y2)) : parseCoordinates ls
     where 
         [x1, y1] = map readInt $ splitOn "," to
         [x2, y2] = map readInt $ splitOn "," from
         [to, from] = splitOn "->" l
+
+trim :: String -> String
+trim = dropWhileEnd isSpace . dropWhile isSpace

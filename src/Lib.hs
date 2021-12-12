@@ -5,12 +5,15 @@ module Lib (
     playBingo, createBingoBoards, bingoScore, findBingoWinner, findLastBingoWinner,
     generateCoordinateSpace, getCollisions,
     lanternfish,
-    alignCrabs, alignExponentialCrabs
+    alignCrabs, alignExponentialCrabs,
+    countUniqueDigits
+
 ) where
 
 import Data.List(transpose, partition, sort)
 import Data.Map (Map)
 import qualified Data.Map as Map
+import Text.ParserCombinators.ReadP (count)
 
 -- Day 1: AOC 2021
 
@@ -185,3 +188,11 @@ alignExponentialCrabs' l u xs
 expDistance :: Int -> Int -> Int
 expDistance c x = div (s * (s + 1)) 2
     where s = abs (x - c)
+
+-- Day 8: AOC 2021
+
+countUniqueDigits :: [[String]] -> Int
+countUniqueDigits [input, output] = length uniqueDigits
+    where 
+        uniqueDigits = filter (\x -> length x `elem` [2, 3, 4, 7]) output
+countUniqueDigits xs = error "invalid format"
