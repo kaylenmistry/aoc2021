@@ -3,10 +3,12 @@ module Lib (
     calculatePosition, calculatePositionWithAim, Command(Forward, Up, Down),
     calculateGammaRate, calculateEpsilonRate, oxygenGeneratorRating, co2ScrubberRating,
     playBingo, createBingoBoards, bingoScore, findBingoWinner, findLastBingoWinner,
-    generateCoordinateSpace, getCollisions
+    generateCoordinateSpace, getCollisions,
+    lanternfish,
+    alignCrabs, alignExponentialCrabs
 ) where
 
-import Data.List(transpose, partition)
+import Data.List(transpose, partition, sort)
 import Data.Map (Map)
 import qualified Data.Map as Map
 
@@ -57,13 +59,13 @@ calculateEpsilonRate :: [[Int]] -> [Int]
 calculateEpsilonRate xs = map (\b -> if b < 0 then 1 else 0) (countBitOccurrences xs)
 
 countBitOccurrences :: [[Int]] -> [Int]
-countBitOccurrences xs = foldl (zipWith (\c b -> if b == 1 then c + 1 else c - 1)) (repeat 0) xs
+countBitOccurrences = foldl (zipWith (\c b -> if b == 1 then c + 1 else c - 1)) (repeat 0)
 
 
 oxygenGeneratorRating :: [[Int]] -> [Int]
 oxygenGeneratorRating [x] = x
 oxygenGeneratorRating ([]:xs) = []
-oxygenGeneratorRating xs = bit : (oxygenGeneratorRating $ map tail $ filter (\bs -> bit == head bs) xs)
+oxygenGeneratorRating xs = bit : oxygenGeneratorRating (map tail $ filter (\bs -> bit == head bs) xs)
     where 
         bit = if bitCount < 0 then 0 else 1
         bitCount = foldl (\c b -> if b == 1 then c + 1 else c - 1) 0 (map head xs)
@@ -71,7 +73,7 @@ oxygenGeneratorRating xs = bit : (oxygenGeneratorRating $ map tail $ filter (\bs
 co2ScrubberRating :: [[Int]] -> [Int]
 co2ScrubberRating [x] = x
 co2ScrubberRating ([]:xs) = []
-co2ScrubberRating xs = bit : (co2ScrubberRating $ map tail $ filter (\bs -> bit == head bs) xs)
+co2ScrubberRating xs = bit : co2ScrubberRating (map tail $ filter (\bs -> bit == head bs) xs)
     where 
         bit = if bitCount < 0 then 1 else 0
         bitCount = foldl (\c b -> if b == 1 then c + 1 else c - 1) 0 (map head xs)
@@ -91,21 +93,21 @@ findLastBingoWinner = findBingoWinner . reverse
 playBingo :: [Int] -> [[[Maybe Int]]] -> [(Int, [[[Maybe Int]]])]
 playBingo [] _ = []
 playBingo _ [] = []
-playBingo (n:ns) boards = (n, bingoBoards) : (playBingo ns updatedBoards)
+playBingo (n:ns) boards = (n, bingoBoards) : playBingo ns updatedBoards
     where
-        (bingoBoards, updatedBoards) = partition (checkForBingo) $ map (maybeMarkBoard n) boards
+        (bingoBoards, updatedBoards) = partition checkForBingo $ map (maybeMarkBoard n) boards
 
 checkForBingo :: [[Maybe Int]] -> Bool
 checkForBingo board = checkForBingoRows board || checkForBingoRows (transpose board)
 
 checkForBingoRows :: [[Maybe Int]] -> Bool
-checkForBingoRows board = foldl (||) False $ map (foldl (\a x -> a && x == Nothing) True) board
+checkForBingoRows board = or $ map (foldl (\a x -> a && x == Nothing) True) board
 
 createBingoBoards :: [[[Int]]] -> [[[Maybe Int]]]
-createBingoBoards = map . map . map $ (\x -> Just x)
+createBingoBoards = map . map . map $ Just
 
 maybeMarkBoard :: Int -> [[Maybe Int]] -> [[Maybe Int]]
-maybeMarkBoard x board = (map . map) (markBoard x) board 
+maybeMarkBoard x = (map . map) (markBoard x) 
 
 markBoard :: Int -> Maybe Int -> Maybe Int
 markBoard _ Nothing = Nothing
@@ -127,8 +129,7 @@ generateCoordinateSpace' ((to, from):xs) m = generateCoordinateSpace' xs updated
         coordinates = lineCoordinates to from
 
 updateMap :: [(Int, Int)] -> Map (Int, Int) Int -> Map (Int, Int) Int
-updateMap [] m = m
-updateMap (x:xs) m = updateMap xs (Map.insertWith (+) x 1 m)
+updateMap xs m = foldl (\ m x -> Map.insertWith (+) x 1 m) m xs
 
 lineCoordinates :: (Int, Int) -> (Int, Int) -> [(Int, Int)]
 lineCoordinates (x1, y1) (x2, y2) 
@@ -138,3 +139,49 @@ lineCoordinates (x1, y1) (x2, y2)
     | otherwise = (x1, y1) : lineCoordinates (x, y) (x2, y2)
         where x = if x1 < x2 then x1 + 1 else x1 - 1
               y = if y1 < y2 then y1 + 1 else y1 - 1
+
+-- Day 6: AOC 2021
+
+lanternfish :: Int -> [Int] -> [Int]
+lanternfish 0 fs = fs 
+lanternfish n (f0:f1:f2:f3:f4:f5:f6:f7:f8:[]) = lanternfish (n-1) (f1:f2:f3:f4:f5:f6:(f7+f0):f8:f0:[])
+
+genLanternfish :: [Int] -> [Int]
+genLanternfish [] = []
+genLanternfish (0:fs) = 6:8:genLanternfish fs
+genLanternfish (f:fs) = (f-1) : genLanternfish fs
+
+-- Day 7: AOC 2021
+
+alignCrabs :: [Int] -> Int
+alignCrabs xs = alignCrabs' min max xs 
+    where
+        min = head sortedList
+        max = last sortedList 
+        sortedList = sort xs
+
+alignCrabs' :: Int -> Int -> [Int] -> Int 
+alignCrabs' _ _ [] = 0
+alignCrabs' l u xs  
+    | l == u     = cost
+    | otherwise  = min cost (alignCrabs' (l + 1) u xs)
+    where 
+        cost = foldl (\acc x -> acc + abs(x - l)) 0 xs
+
+alignExponentialCrabs :: [Int] -> Int
+alignExponentialCrabs xs = alignExponentialCrabs' min max xs 
+    where 
+        min = head sortedList
+        max = last sortedList 
+        sortedList = sort xs
+
+alignExponentialCrabs' :: Int -> Int -> [Int] -> Int
+alignExponentialCrabs' l u xs
+    | l == u    = cost
+    | otherwise = min cost (alignExponentialCrabs' (l + 1) u xs)
+    where 
+        cost = foldl (\acc x -> acc + expDistance l x) 0 xs
+
+expDistance :: Int -> Int -> Int
+expDistance c x = div (s * (s + 1)) 2
+    where s = abs (x - c)

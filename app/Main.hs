@@ -3,6 +3,7 @@ module Main where
 import Lib
 import System.IO
 import Data.List.Split
+import Data.List(sort, group)
 
 main :: IO ()
 main = do 
@@ -10,7 +11,9 @@ main = do
     -- day2Main
     -- day3Main
     -- day4Main
-    day5Main
+    -- day5Main
+    -- day6Main
+    day7Main
 
 -- Outputs
 
@@ -67,6 +70,26 @@ day5Main = do
     -- print $ length $ getCollisions $ generateCoordinateSpace input
     print "Day 5 - Part 2:"
     print $ length $ getCollisions $ generateCoordinateSpace input
+
+day6Main :: IO ()
+day6Main = do
+    contents <- readFile "data/day6.txt" 
+    let input = parseListOfNumbers $ head $ lines contents
+    let startFish = [0] ++ (map length $ group $ sort input) ++ [0, 0, 0]
+    print "Day 6 - Part 1:"
+    print $ sum $ lanternfish 80 startFish
+    print "Day 6 - Part 2:"
+    print $ sum $ lanternfish 256 startFish
+
+day7Main :: IO ()
+day7Main = do 
+    contents <- readFile "data/day7.txt" 
+    print "Day 7 - Part 1:"
+    let input = parseListOfNumbers $ head $ lines contents
+    print $ alignCrabs input 
+    print "Day 7 - Part 2:"
+    print $ alignExponentialCrabs input
+
 
 -- Helpers
 
