@@ -303,8 +303,7 @@ completeLine' (c:cs) stk
     | otherwise       = error "corrupt line"
 
 autocompleteScore :: [Char] -> Int
-autocompleteScore [] = 0
-autocompleteScore (c:cs) = completionScore c + (5 * autocompleteScore cs)
+autocompleteScore = foldl (\n d -> 5 * n + completionScore d) 0
 
 completionScore :: Char -> Int
 completionScore ')' = 1

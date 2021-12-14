@@ -5,7 +5,6 @@ import System.IO ()
 import Data.List.Split ( chunksOf, splitOn, splitWhen )
 import Data.List(sort, group, dropWhileEnd)
 import Data.Char (isSpace)
-import Lib (uniqueDigits)
 
 main :: IO ()
 main = do 
@@ -16,9 +15,9 @@ main = do
     -- day5Main
     -- day6Main
     -- day7Main
-    day8Main
+    -- day8Main
     -- day9Main
-    -- day10Main
+    day10Main
 
 -- Outputs
 
@@ -112,6 +111,7 @@ day9Main = do
     let emptyCol = replicate (2 + length (head input)) 9
     let sanitisedInput = emptyCol : map (\l -> 9 : readDigits l ++ [9]) input ++ [emptyCol]
     print $ sumLowPoints sanitisedInput
+    print "Day 9 - Part 1:"
 
 day10Main :: IO ()
 day10Main = do 
@@ -121,7 +121,7 @@ day10Main = do
     print $ totalSyntaxErrorScore (map findCorruptCharacter input)
     print "Day 10 - Part 2:"
     let autocompleteScores = sort $ map (autocompleteScore . completeLine) (filterCorruptedLines input)
-    print $ autocompleteScores!!27
+    print $ autocompleteScores !! div (length autocompleteScores) 2
 
 -- Helpers
 
