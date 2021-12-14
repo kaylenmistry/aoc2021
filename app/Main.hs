@@ -5,6 +5,7 @@ import System.IO ()
 import Data.List.Split ( chunksOf, splitOn, splitWhen, splitEvery )
 import Data.List(sort, group, dropWhileEnd)
 import Data.Char (isSpace)
+import Lib (PaperFold, foldPaper)
 
 main :: IO ()
 main = do 
@@ -18,7 +19,8 @@ main = do
     -- day8Main
     -- day9Main
     -- day10Main
-    day11Main
+    -- day11Main
+    day13Main
 
 -- Outputs
 
@@ -131,6 +133,17 @@ day11Main = do
     print "Day 11 - Part 1:"
     print $ flashingOctopi input
 
+day13Main :: IO ()
+day13Main = do 
+    contents <- readFile "data/day13.txt"
+    let [coordsInput, foldsInput] = splitWhen (== "") (lines contents)
+    let coords = map (toTuple . parseListOfNumbers) coordsInput
+    let folds = map readFold foldsInput
+    print "Day 13 - Part 1:"
+    print $ length $ foldPaper coords [head folds]
+    print "Day 13 - Part 2:"
+    print "Plot the following coordinates to find the code :)"
+    print $ foldPaper coords folds
 
 -- Helpers
 
@@ -145,6 +158,16 @@ readCommand ('f':'o':'r':'w':'a':'r':'d':' ': n) = Forward (readInt n)
 readCommand ('u':'p':' ': n) = Up (readInt n)
 readCommand ('d':'o':'w':'n':' ': n) = Down (readInt n)
 readCommand s = error "invalid command"
+
+readFold :: String -> PaperFold
+readFold f = if axis == 'x' then X n else Y n
+    where 
+        n = readInt val
+        axis = last instruction
+        [instruction, val] = splitOn "=" f
+
+toTuple :: [Int] -> (Int, Int)
+toTuple [x, y] = (x, y)
 
 -- Parsing 
 

@@ -9,10 +9,11 @@ module Lib (
     uniqueDigits, getDigitOutput, contains,
     sumLowPoints,
     totalSyntaxErrorScore, findCorruptCharacter, filterCorruptedLines, completeLine, autocompleteScore,
-    flashingOctopi
+    flashingOctopi,
+    foldPaper, PaperFold(X, Y)
 ) where
 
-import Data.List (transpose, partition, sort, sortBy, zip5, intersect)
+import Data.List (transpose, partition, sort, sortBy, zip5, intersect, nub)
 import Data.Function (on)
 import Data.Map (Map)
 import Data.Maybe (isNothing, isJust)
@@ -326,3 +327,14 @@ octopusStep n xs = numFlashes + octopusStep (n - 1) flashStep
         numFlashes = length $ map (filter (> 9)) incrementNeighbours
         incrementNeighbours = incrementStep
         incrementStep = (map . map) (+ 1) xs
+
+-- Day 13: AOC 2021
+
+data PaperFold = X Int | Y Int deriving (Show)
+
+foldPaper :: [(Int, Int)] -> [PaperFold] -> [(Int, Int)]
+foldPaper= foldl (\ coords f -> nub $ map (folder f) coords)
+
+folder ::PaperFold -> (Int, Int) -> (Int, Int)
+folder (X n) (x, y) = if x > n then (2 * n - x, y) else (x, y)
+folder (Y n) (x, y) = if y > n then (x, 2 * n - y) else (x, y)
