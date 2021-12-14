@@ -5,7 +5,7 @@ import System.IO ()
 import Data.List.Split ( chunksOf, splitOn, splitWhen )
 import Data.List(sort, group, dropWhileEnd)
 import Data.Char (isSpace)
-import Lib (autocompleteScore)
+import Lib (uniqueDigits)
 
 main :: IO ()
 main = do 
@@ -16,9 +16,9 @@ main = do
     -- day5Main
     -- day6Main
     -- day7Main
-    -- day8Main
+    day8Main
     -- day9Main
-    day10Main
+    -- day10Main
 
 -- Outputs
 
@@ -100,7 +100,9 @@ day8Main = do
     contents <- readFile "data/day8.txt"
     print "Day 8 - Part 1:"
     let input = map (map (splitOn " " . trim) . splitOn "|") (lines contents)
-    print $ sum $ map countUniqueDigits input
+    print $ sum $ map ((length . snd) . uniqueDigits) input
+    print "Day 8 - Part 2:"
+    print $ sum $ map getDigitOutput input
 
 day9Main :: IO ()
 day9Main = do 

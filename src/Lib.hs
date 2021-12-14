@@ -6,16 +6,16 @@ module Lib (
     generateCoordinateSpace, getCollisions,
     lanternfish,
     alignCrabs, alignExponentialCrabs,
-    countUniqueDigits,
+    uniqueDigits, getDigitOutput, contains,
     sumLowPoints,
     totalSyntaxErrorScore, findCorruptCharacter, filterCorruptedLines, completeLine, autocompleteScore
 ) where
 
-import Data.List (transpose, partition, sort, zip5)
+import Data.List (transpose, partition, sort, sortBy, zip5, intersect)
+import Data.Function (on)
 import Data.Map (Map)
-import Data.Maybe (isNothing)
+import Data.Maybe (isNothing, isJust)
 import qualified Data.Map as Map
-import Text.ParserCombinators.ReadP (count)
 
 -- Day 1: AOC 2021
 
@@ -29,7 +29,7 @@ countDepthIncreases' (x1:x2:xs) n = countDepthIncreases' (x2:xs) count
     where count = if x2 > x1 then n + 1 else n
 
 generateSlidingWindow :: Num a => [a] -> [a]
-generateSlidingWindow (x1:x2:x3:xs) = (x1 + x2 + x3) : (generateSlidingWindow (x2:x3:xs))
+generateSlidingWindow (x1:x2:x3:xs) = (x1 + x2 + x3) : generateSlidingWindow (x2:x3:xs)
 generateSlidingWindow xs = []
 
 -- Day 2: AOC 2021
@@ -86,11 +86,12 @@ co2ScrubberRating xs = bit : co2ScrubberRating (map tail $ filter (\bs -> bit ==
 -- Day 4: AOC 2021
 
 bingoScore :: (Int, [[Maybe Int]]) -> Maybe Int 
-bingoScore (n, board) = fmap sum $ sequence $ filter (\x -> x /= Nothing) (concat board)
+bingoScore (n, board) = fmap sum $ sequence $ filter isJust (concat board)
 
 findBingoWinner :: [(Int, [[[Maybe Int]]])] -> (Int, [[Maybe Int]]) 
 findBingoWinner ((n, []): xs) = findBingoWinner xs
 findBingoWinner ((n, bs): xs) = (n, head bs)
+findBingoWinner [] = error "no winner"
 
 findLastBingoWinner :: [(Int, [[[Maybe Int]]])] -> (Int, [[Maybe Int]])
 findLastBingoWinner = findBingoWinner . reverse
@@ -149,7 +150,8 @@ lineCoordinates (x1, y1) (x2, y2)
 
 lanternfish :: Int -> [Int] -> [Int]
 lanternfish 0 fs = fs 
-lanternfish n (f0:f1:f2:f3:f4:f5:f6:f7:f8:[]) = lanternfish (n-1) (f1:f2:f3:f4:f5:f6:(f7+f0):f8:f0:[])
+lanternfish n [f0,f1,f2,f3,f4,f5,f6,f7,f8]= lanternfish (n-1) [f1,f2,f3,f4,f5,f6,f7+f0,f8,f0]
+lanternfish n fs = error "unexpected format"
 
 genLanternfish :: [Int] -> [Int]
 genLanternfish [] = []
@@ -194,11 +196,56 @@ expDistance c x = div (s * (s + 1)) 2
 -- Day 8: AOC 2021
 -- Day 8: AOC 2021
 
-countUniqueDigits :: [[String]] -> Int
-countUniqueDigits [input, output] = length uniqueDigits
+uniqueDigits :: [[String]] -> ([(Int, String)], [(Int, String)])
+uniqueDigits [input, output] = (uniqueInputs, uniqueOutputs)
     where 
-        uniqueDigits = filter (\x -> length x `elem` [2, 3, 4, 7]) output
-countUniqueDigits xs = error "invalid format"
+        uniqueInputs = findDigits $ filterUnique input
+        uniqueOutputs = findDigits $ filterUnique output
+        filterUnique = filter (\x -> length x `elem` [2, 3, 4, 7])
+uniqueDigits xs = error "invalid format"
+
+getDigitOutput :: [[String]] -> Int
+getDigitOutput [input, output] = result
+    where 
+        result = foldl (\n d -> 10 * n + d) 0 outputDigits
+        outputDigits = map (findOutputDigit digits) output
+        digits = findDigits input
+getDigitOutput xs = error "invalid format"
+
+findOutputDigit :: [(Int, String)] -> String -> Int
+findOutputDigit ds cs = n
+    where 
+        [(n, _)] = filter (\(n, str) -> isEqual str cs) ds
+
+
+findDigits :: [String] -> [(Int, String)]
+findDigits ds = findDigits' [] (sortBy (compare `on` length) ds)
+
+findDigits' :: [(Int, String)] -> [String] -> [(Int, String)]
+findDigits' digits [] = digits
+findDigits' digits (d:ds) = findDigits' (digits ++ [(digit d, d)]) ds
+    where 
+        digit cs
+            | n == 2                             = 1
+            | n == 3                             = 7
+            | n == 4                             = 4
+            | n == 5 && cs `contains` one        = 3
+            | n == 5 && cs `contains` fiveCheck  = 5
+            | n == 5                             = 2
+            | n == 6 && cs `contains` four       = 9
+            | n == 6 && cs `contains` one        = 0
+            | n == 6                             = 6
+            | n == 7                             = 8
+            | otherwise                          = error "invalid digit"
+        n = length d
+        fiveCheck = filter (`notElem` one) four
+        ((1, one):_:(4, four):_) = digits
+
+isEqual :: String -> String -> Bool
+isEqual s1 s2 = s1 `contains` s2 && s2 `contains` s1
+
+contains :: String -> String -> Bool 
+contains s1 s2 = length (s1 `intersect` s2) == length s2
 
 -- Day 9: AOC 2021
 
