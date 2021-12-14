@@ -8,7 +8,8 @@ module Lib (
     alignCrabs, alignExponentialCrabs,
     uniqueDigits, getDigitOutput, contains,
     sumLowPoints,
-    totalSyntaxErrorScore, findCorruptCharacter, filterCorruptedLines, completeLine, autocompleteScore
+    totalSyntaxErrorScore, findCorruptCharacter, filterCorruptedLines, completeLine, autocompleteScore,
+    flashingOctopi
 ) where
 
 import Data.List (transpose, partition, sort, sortBy, zip5, intersect)
@@ -311,3 +312,17 @@ completionScore ']' = 2
 completionScore '}' = 3
 completionScore '>' = 4
 completionScore c   = 0
+
+-- Day 11: AOC 2021
+
+flashingOctopi :: [[Int]] -> Int
+flashingOctopi = octopusStep 100
+
+octopusStep :: Int -> [[Int]] -> Int
+octopusStep 0 xs = 0
+octopusStep n xs = numFlashes + octopusStep (n - 1) flashStep
+    where 
+        flashStep = (map . map) (\x -> if x > 9 then 0 else x) incrementNeighbours
+        numFlashes = length $ map (filter (> 9)) incrementNeighbours
+        incrementNeighbours = incrementStep
+        incrementStep = (map . map) (+ 1) xs

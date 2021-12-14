@@ -2,7 +2,7 @@ module Main where
 
 import Lib
 import System.IO ()
-import Data.List.Split ( chunksOf, splitOn, splitWhen )
+import Data.List.Split ( chunksOf, splitOn, splitWhen, splitEvery )
 import Data.List(sort, group, dropWhileEnd)
 import Data.Char (isSpace)
 
@@ -17,7 +17,8 @@ main = do
     -- day7Main
     -- day8Main
     -- day9Main
-    day10Main
+    -- day10Main
+    day11Main
 
 -- Outputs
 
@@ -122,6 +123,14 @@ day10Main = do
     print "Day 10 - Part 2:"
     let autocompleteScores = sort $ map (autocompleteScore . completeLine) (filterCorruptedLines input)
     print $ autocompleteScores !! div (length autocompleteScores) 2
+
+day11Main :: IO ()
+day11Main = do 
+    contents <- readFile "data/day11.txt"
+    let input = map (map readInt .chunksOf 1) $ lines contents
+    print "Day 11 - Part 1:"
+    print $ flashingOctopi input
+
 
 -- Helpers
 
