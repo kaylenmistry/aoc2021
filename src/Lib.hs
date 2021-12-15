@@ -10,10 +10,11 @@ module Lib (
     sumLowPoints,
     totalSyntaxErrorScore, findCorruptCharacter, filterCorruptedLines, completeLine, autocompleteScore,
     flashingOctopi,
-    foldPaper, PaperFold(X, Y)
+    foldPaper, PaperFold(X, Y),
+    pairInsertion, applyRules
 ) where
 
-import Data.List (transpose, partition, sort, sortBy, zip5, intersect, nub)
+import Data.List (find, transpose, partition, sort, sortBy, zip5, intersect, nub)
 import Data.Function (on)
 import Data.Map (Map)
 import Data.Maybe (isNothing, isJust)
@@ -338,3 +339,17 @@ foldPaper= foldl (\ coords f -> nub $ map (folder f) coords)
 folder ::PaperFold -> (Int, Int) -> (Int, Int)
 folder (X n) (x, y) = if x > n then (2 * n - x, y) else (x, y)
 folder (Y n) (x, y) = if y > n then (x, 2 * n - y) else (x, y)
+
+-- Day 14: AOC 2021
+
+pairInsertion :: Int -> String -> [(String, String)] -> String
+pairInsertion 0 template rules = template
+pairInsertion n template rules = pairInsertion (n - 1) newTemplate rules
+    where 
+        newTemplate = foldl (\acc x -> acc ++ tail x) r rs
+        (r:rs) = map (applyRules rules) $ zipWith (\a b -> [a, b]) template (tail template)
+
+applyRules :: [(String, String)] -> String -> String
+applyRules rules s = case find (\(a, b) -> a == s) rules of 
+    Nothing -> s
+    Just (a, b)  -> [head s] ++ b ++ tail s 

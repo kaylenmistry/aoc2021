@@ -5,7 +5,7 @@ import System.IO ()
 import Data.List.Split ( chunksOf, splitOn, splitWhen, splitEvery )
 import Data.List(sort, group, dropWhileEnd)
 import Data.Char (isSpace)
-import Lib (PaperFold, foldPaper)
+import Lib (PaperFold, foldPaper, pairInsertion)
 
 main :: IO ()
 main = do 
@@ -20,7 +20,8 @@ main = do
     -- day9Main
     -- day10Main
     -- day11Main
-    day13Main
+    -- day13Main
+    day14Main
 
 -- Outputs
 
@@ -145,6 +146,20 @@ day13Main = do
     print "Plot the following coordinates to find the code :)"
     print $ foldPaper coords folds
 
+day14Main :: IO ()
+day14Main = do 
+    contents <- readFile "data/day14.txt"
+    let [[template], rulesInput] = splitWhen (== "") (lines contents)
+    let rules = map (toTuple . splitOn " -> ") rulesInput
+    let polymer = pairInsertion 10 template rules
+    print "Day 14 - Part 1:"
+    let counts = sort $ map length $ (group . sort) polymer
+    print $ last counts - head counts
+    print "Day 14 - Part 2:"
+    let polymer = pairInsertion 40 template rules
+    let counts = sort $ map length $ (group . sort) polymer
+    print $ last counts - head counts
+
 -- Helpers
 
 readInt :: String -> Int
@@ -166,7 +181,7 @@ readFold f = if axis == 'x' then X n else Y n
         axis = last instruction
         [instruction, val] = splitOn "=" f
 
-toTuple :: [Int] -> (Int, Int)
+toTuple :: [a] -> (a, a)
 toTuple [x, y] = (x, y)
 
 -- Parsing 
