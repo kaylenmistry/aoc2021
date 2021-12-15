@@ -5,7 +5,6 @@ import System.IO ()
 import Data.List.Split ( chunksOf, splitOn, splitWhen, splitEvery )
 import Data.List(sort, group, dropWhileEnd)
 import Data.Char (isSpace)
-import Lib (PaperFold, foldPaper, pairInsertion)
 
 main :: IO ()
 main = do 
@@ -151,14 +150,12 @@ day14Main = do
     contents <- readFile "data/day14.txt"
     let [[template], rulesInput] = splitWhen (== "") (lines contents)
     let rules = map (toTuple . splitOn " -> ") rulesInput
-    let polymer = pairInsertion 10 template rules
     print "Day 14 - Part 1:"
-    let counts = sort $ map length $ (group . sort) polymer
-    print $ last counts - head counts
+    let polymer = pairInsertion 10 template rules
+    print $ polymerValue polymer (last template)
     print "Day 14 - Part 2:"
     let polymer = pairInsertion 40 template rules
-    let counts = sort $ map length $ (group . sort) polymer
-    print $ last counts - head counts
+    print $ polymerValue polymer (last template)
 
 -- Helpers
 

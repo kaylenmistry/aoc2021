@@ -11,10 +11,10 @@ module Lib (
     totalSyntaxErrorScore, findCorruptCharacter, filterCorruptedLines, completeLine, autocompleteScore,
     flashingOctopi,
     foldPaper, PaperFold(X, Y),
-    pairInsertion, applyRules
+    pairInsertion, polymerValue
 ) where
 
-import Data.List (find, transpose, partition, sort, sortBy, zip5, intersect, nub)
+import Data.List (groupBy, group, find, transpose, partition, sort, sortBy, zip5, intersect, nub)
 import Data.Function (on)
 import Data.Map (Map)
 import Data.Maybe (isNothing, isJust)
@@ -342,14 +342,31 @@ folder (Y n) (x, y) = if y > n then (x, 2 * n - y) else (x, y)
 
 -- Day 14: AOC 2021
 
-pairInsertion :: Int -> String -> [(String, String)] -> String
-pairInsertion 0 template rules = template
-pairInsertion n template rules = pairInsertion (n - 1) newTemplate rules
+polymerValue :: [(String, Int)] -> Char -> Int
+polymerValue pairs l = maxVal - minVal
     where 
-        newTemplate = foldl (\acc x -> acc ++ tail x) r rs
-        (r:rs) = map (applyRules rules) $ zipWith (\a b -> [a, b]) template (tail template)
+        maxVal = foldl (\x (_, y) -> max x y) 0 counts
+        minVal = foldl (\x (_, y) -> min x y) maxBound counts
+        counts = sort $ incrementLastCharacterCount l characterCount
+        incrementLastCharacterCount last = map (\(x, n) -> if x == last then (x, n + 1) else (x, n))
+        characterCount = map (foldl (\(a, n) (b, m) -> (head b, n + m)) ('-', 0)) characters
+        characters = groupBy (\(x, _) (y, _) -> head x == head y) pairs
 
-applyRules :: [(String, String)] -> String -> String
-applyRules rules s = case find (\(a, b) -> a == s) rules of 
-    Nothing -> s
-    Just (a, b)  -> [head s] ++ b ++ tail s 
+pairInsertion :: Int -> String -> [(String, String)] -> [(String, Int)]
+pairInsertion n template = pairInsertion' n sortedPairs -- pairInsertion' n template rules
+    where
+        sortedPairs = map (\xs -> (head xs, length xs)) $ group $ sort pairs 
+        pairs = zipWith (\a b -> [a, b]) template (tail template)
+
+
+pairInsertion' :: Int -> [(String, Int)] -> [(String, String)] -> [(String, Int)]
+pairInsertion' 0 pairs rules = pairs
+pairInsertion' n pairs rules = pairInsertion' (n - 1) updatedPairs rules
+    where 
+        updatedPairs = map (foldl (\(a, n) (b, m) -> (b, n + m)) ("", 0)) newPairs
+        newPairs = groupBy (\(a, _) (b, _) -> a == b) $ sort $ concatMap (applyRules rules) pairs 
+
+applyRules :: [(String, String)] -> (String, Int) -> [(String, Int)]
+applyRules rules (s, n) = case find (\(a, b) -> a == s) rules of 
+    Nothing -> [(s, n)]
+    Just (a, b)  -> [(head s: b, n), (b ++ tail s, n)]
